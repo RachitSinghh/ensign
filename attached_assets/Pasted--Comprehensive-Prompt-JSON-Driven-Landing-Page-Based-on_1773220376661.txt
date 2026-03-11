@@ -1,0 +1,811 @@
+# Comprehensive Prompt: JSON-Driven Landing Page (Based on Panoramic Exports)
+
+> Use this prompt to build a **complete production-ready landing page** for any B2B manufacturer/exporter business. All content is driven from a single JSON data file — change the JSON, and the entire site updates automatically (like slugs in Next.js).
+
+---
+
+## 🎯 High-Level Goal
+
+Build a **single-page React landing page** with:
+- **Vite + React 18 + TypeScript** as the framework
+- **Tailwind CSS** for styling (with CSS variable-based theming)
+- **Framer Motion** for scroll-reveal animations
+- **A centralized JSON data file** (`siteData.json` or `data/siteContent.ts`) that drives ALL text, images, colors, links, SEO meta, form config, and contact info — so changing the JSON instantly reflects on the UI
+- **Firebase Firestore** for form lead storage
+- **Nodemailer SMTP** for sending inquiry + thank-you emails
+- **Express server** for the API layer (integrated via Vite dev middleware)
+- **Vercel + Netlify** deployment support
+
+---
+
+## 📁 Project Structure
+
+```
+root/
+├── index.html                 # Entry HTML with SEO meta tags (driven from JSON)
+├── package.json
+├── vite.config.ts             # Client + Express middleware plugin
+├── vite.config.server.ts      # Server build config (Node target)
+├── tailwind.config.ts         # CSS var-based theme tokens
+├── postcss.config.js
+├── tsconfig.json
+├── vercel.json                # Vercel deployment: rewrites SPA + build config
+├── netlify.toml               # Netlify deployment: functions + redirects
+├── .env                       # SMTP + Firebase env vars
+│
+├── client/
+│   ├── App.tsx                # Root: React Router + providers
+│   ├── global.css             # Tailwind directives + CSS variables (light/dark)
+│   ├── firebase.ts            # Firebase app init (Firestore)
+│   ├── vite-env.d.ts
+│   ├── data/
+│   │   └── siteContent.ts     # ⭐ SINGLE JSON/TS DATA FILE (drives everything)
+│   ├── hooks/
+│   │   ├── use-mobile.tsx
+│   │   └── use-toast.ts
+│   ├── lib/
+│   │   └── utils.ts           # cn() helper (clsx + tailwind-merge)
+│   ├── pages/
+│   │   ├── Index.tsx           # Home page — assembles all sections
+│   │   ├── NotFound.tsx        # 404 page
+│   │   ├── TermsService.tsx    # Terms of Service (content from JSON)
+│   │   └── PP.tsx              # Privacy Policy (content from JSON)
+│   └── components/
+│       ├── Header.tsx
+│       ├── CarouselBags.tsx    # Hero image carousel (auto-slide + manual)
+│       ├── CatalogueForm.tsx   # Lead capture form (Firebase + API)
+│       ├── BelowHero.tsx       # Feature icons strip
+│       ├── AboutUs.tsx         # Company story + video + stats
+│       ├── Testimonials.tsx    # Customer reviews (mobile/desktop split)
+│       ├── Benefits.tsx        # Why partner with us (icon cards)
+│       ├── ProductCategory.tsx # Product grid with hover effects
+│       ├── Process.tsx         # 3-step process flow
+│       ├── Faq.tsx             # Expandable accordion FAQ
+│       ├── Certifications.tsx  # Certification logos grid
+│       ├── FactorySection.tsx  # Factory tour cards with overlay
+│       ├── ExportInfoCard.tsx  # Manufacturing units + contact info
+│       ├── Footer.tsx          # Links, social icons, copyright
+│       ├── FloatingBags.tsx    # (Optional) CSS-animated floating product images
+│       ├── HoverText.tsx       # (Optional) Mouse-follow reveal effect
+│       └── ui/                 # shadcn/ui primitives (accordion, dialog, toast, etc.)
+│
+├── api/
+│   └── send-email.ts          # Vercel serverless function (also used by Express)
+│
+├── server/
+│   ├── index.ts               # Express app factory (CORS, JSON, routes)
+│   ├── node-build.ts          # Production server (serves SPA + API)
+│   └── routes/
+│       └── demo.ts            # Example API route
+│
+├── shared/
+│   └── api.ts                 # Shared TypeScript types (client ↔ server)
+│
+└── public/
+    ├── favicon.ico
+    ├── logo.png
+    ├── logo-land.png           # Landscape logo for header
+    ├── robots.txt
+    ├── videoplayback.mp4       # About section video
+    ├── 1.png, 2.png, 3.png, 4.png   # Hero carousel images
+    ├── Bags/                   # (Optional) floating bag images
+    ├── Certifications/         # Certification logo images (1-5.png)
+    ├── Factory/                # Factory section images (9 images)
+    └── HomeProCat/             # Product category images (1-12.png)
+```
+
+---
+
+## ⭐ THE JSON DATA FILE (`client/data/siteContent.ts`)
+
+This is the **most critical file**. Every single piece of content on the site comes from here. When you change a heading, description, image path, color, or contact detail in this file, the UI updates automatically.
+
+```typescript
+// client/data/siteContent.ts
+
+export const siteContent = {
+  // ─── BRAND / GLOBAL ───
+  brand: {
+    name: "Panoramic Exports",
+    tagline: "Manufacturer & Wholesaler of Fashion Bags, Jute Bags & Leather Bags",
+    logoSrc: "/pe-logo-landscape.png",
+    logoAlt: "Panoramic Exports Logo",
+    copyrightName: "Panoramic Exports",
+    websiteUrl: "https://panoramicexports.com",
+    gtmId: "AW-17637204866",            // Google Tag Manager ID
+  },
+
+  // ─── SEO (drives index.html meta tags) ───
+  seo: {
+    title: "Registration | Panoramic Exports - Global Bags Manufacturer",
+    description: "Register with Panoramic Exports, a leading global manufacturer of beaded bags, leather bags, jute bags, and custom designs with low MOQ and worldwide delivery.",
+    keywords: "Panoramic Exports, bag manufacturer, beaded bags, leather bags, jute bags, wholesale bags, custom bags, low MOQ bags, export bags",
+    author: "Panoramic Exports",
+    ogImage: "https://panoramicexports.com/og-image.jpg",
+    ogUrl: "https://panoramicexports.com/registration",
+    twitterCard: "summary_large_image",
+    themeColor: "#000000",
+  },
+
+  // ─── THEME COLORS ───
+  // These map to Tailwind classes and CSS variables used throughout
+  theme: {
+    primary: "#BA9552",         // Gold accent
+    primaryDark: "#4A2E20",     // Dark brown
+    primaryDarker: "#431803",   // Deepest brown
+    headerBannerBg: "#ba9552",  // Top bar background
+    footerBg: "#4a2e20",       // Footer background
+    heroGradient: "from-amber-50 via-amber-50 to-white",
+    scrollTopBg: "bg-black",
+    scrollTopHoverBg: "hover:bg-[#4c2b0f]",
+  },
+
+  // ─── NAVIGATION ───
+  navigation: [
+    { label: "Home", href: "/" },
+    { label: "About Us", href: "/#about" },
+    { label: "Our Products", href: "/#ourproduct" },
+    { label: "Contact Us", href: "/#contact" },
+  ],
+
+  // ─── HERO SECTION ───
+  hero: {
+    mobileHeading: "Manufacturer & Wholesaler of Fashion Bags, Jute Bags & Leather Bags",
+    mobileSubtext: "Discover India's Latest Collection of Fashion Bags, Jute Bags and Leather Goods",
+    carouselImages: ["/1.png", "/2.png", "/3.png"],
+  },
+
+  // ─── CATALOGUE FORM ───
+  form: {
+    badge: "DIRECT FROM FACTORY",
+    heading: "Get Your",
+    headingHighlight: "Catalog",
+    headingEnd: "Now!",
+    submitButtonText: "Enquire Now",
+    submittingText: "Submitting...",
+    privacyNote: "*Your email will only be kept if registration is completed successfully, with full privacy.",
+    successTitle: "Thank You!",
+    successMessage: "We've received your request. We'll contact you soon with our catalog.",
+    firestoreCollection: "bagsLeads",
+    source: "Bags-LandingPage",
+    fields: [
+      { name: "fullName", label: "Full Name", type: "text", placeholder: "Your full name", required: true },
+      { name: "location", label: "Location (e.g. City, Country)", type: "text", placeholder: "City, Country", required: true },
+      { name: "email", label: "Email Address", type: "email", placeholder: "you@email.com", required: true },
+      { name: "message", label: "Message (Optional)", type: "textarea", placeholder: "Tell us what you're looking for...", required: false, rows: 4 },
+    ],
+    resetDelayMs: 8000,
+  },
+
+  // ─── BELOW HERO — FEATURE ICONS STRIP ───
+  features: [
+    {
+      src: "https://panoramicexports.com/Features/1.webp",
+      title: "100% Organic",
+      text: "Sustainable & eco-friendly materials",
+    },
+    {
+      src: "https://panoramicexports.com/Features/2.webp",
+      title: "Low MOQ",
+      text: "Flexible order quantities for every business",
+    },
+    {
+      src: "https://panoramicexports.com/Features/3.webp",
+      title: "Handwoven",
+      text: "Crafted by skilled artisans with care",
+    },
+    {
+      src: "https://panoramicexports.com/Features/4.webp",
+      title: "Genuine Leather",
+      text: "Premium quality, ethically sourced leather",
+    },
+  ],
+
+  // ─── ABOUT SECTION ───
+  about: {
+    sectionId: "about",
+    heading: "About Panoramic Exports",
+    subheading: "25+ years in making of premium Fashion Accessories, Jute Bags and Leather Goods for global brands.",
+    storyTitle: "Our Story",
+    storyParagraphs: [
+      "Panoramic Exports is a Noida-based manufacturer and exporter of fashion accessories and leather goods with 25 years of industry experience. As a Sedex-certified company, we prioritize ethical practices, sustainability, and responsible sourcing.",
+      "Our product range includes fashion bags (raffia, macramé, jute, cotton, beaded, wooden), fashion accessories (jewelry, hair bands), and a wide variety of leather goods (handbags, portfolios, duffle bags, sleeves, belts, aprons, and more).",
+      "With a focus on craftsmanship, quality, and eco-friendly production, we deliver reliable, handmade products to global brands across competitive international markets.",
+    ],
+    videoSrc: "/videoplayback.mp4",
+    statsTitle: "Our Strength",
+    stats: [
+      { label: "Years", value: "25+" },
+      { label: "Countries", value: "20+" },
+      { label: "Global Brands", value: "12+" },
+      { label: "Clients", value: "100+" },
+    ],
+  },
+
+  // ─── TESTIMONIALS ───
+  testimonials: {
+    heading: "What Our Customers Say",
+    subheading: "Hundreds of businesses trust Panoramic Exports to source their fashion, jute and leather bags.",
+    // Desktop testimonials (longer quotes, shown on md+)
+    desktop: [
+      {
+        id: 1,
+        quote: "Finding the latest designs and good workmanship in beaded bags was always our biggest challenge. Panoramic Exports helped us create a beautiful beaded bag collection, and their team guided us with valuable design inputs.",
+        author: "Jane S.",
+        title: "Owner",
+        company: "The Fashion Boutique",
+        rating: 5,
+        initials: "JS",
+      },
+      {
+        id: 2,
+        quote: "The 100 pcs MOQ is a great relief for our small business. Now we can test new products without a huge financial risk. Their quality is always outstanding.",
+        author: "Marcus K.",
+        title: "Partner",
+        company: "Fashion Bay",
+        rating: 5,
+        initials: "MK",
+      },
+      {
+        id: 3,
+        quote: "They helped us with door delivery shipments, which is a great asset for our business. Their freight solutions are much cheaper and faster, helping us save a lot of money.",
+        author: "Chen L.",
+        title: "Purchasing Manager",
+        company: "Harston Imports",
+        rating: 5,
+        initials: "CL",
+      },
+    ],
+    // Mobile testimonials (shorter quotes, shown on <md)
+    mobile: [
+      {
+        id: 4,
+        quote: "Panoramic Exports helped us design and source stunning beaded bags with great quality.",
+        author: "Jane S.",
+        title: "Owner",
+        company: "The Fashion Boutique",
+        rating: 5,
+        initials: "JS",
+      },
+      {
+        id: 5,
+        quote: "Their 100 pcs MOQ lets us test new products affordably. The quality is always excellent.",
+        author: "Marcus K.",
+        title: "Partner",
+        company: "Fashion Bay",
+        rating: 5,
+        initials: "MK",
+      },
+      {
+        id: 6,
+        quote: "Their affordable door-delivery shipments save us time and a lot of money.",
+        author: "Chen L.",
+        title: "Purchasing Manager",
+        company: "Harston Imports",
+        rating: 5,
+        initials: "CL",
+      },
+    ],
+  },
+
+  // ─── BENEFITS SECTION ───
+  benefits: {
+    heading: "Why Partner with Panoramic Exports",
+    subheading: "We offer comprehensive solutions tailored to your business needs.",
+    items: [
+      {
+        icon: "CheckCircle2",  // lucide-react icon name
+        title: "Low MOQ",
+        description: "Flexible MOQs for Different Customers",
+      },
+      {
+        icon: "DollarSign",
+        title: "Competitive Prices",
+        description: "Guaranteed best deals for you",
+      },
+      {
+        icon: "Clock",
+        title: "Shorter Lead Times",
+        description: "Our strong control over raw materials ensures shorter lead times",
+      },
+      {
+        icon: "Truck",
+        title: "DDP/FOB Shipments",
+        description: "In-house logistics manage all shipping terms",
+      },
+    ],
+  },
+
+  // ─── PRODUCT CATEGORIES ───
+  productCategories: {
+    sectionId: "ourproduct",
+    heading: "Latest Product Categories",
+    subheading: "Explore handcrafted bags, made to meet global standards.",
+    ctaText: "Discover our full range of handcrafted bags for boutiques & global brands.",
+    categories: [
+      { id: 1, name: "Beaded Bag", image: "/HomeProCat/1.png" },
+      { id: 2, name: "Crochet Bag", image: "/HomeProCat/2.png" },
+      { id: 3, name: "Ladies Leather Handbag", image: "/HomeProCat/3.png" },
+      { id: 4, name: "Leather Duffle Bag", image: "/HomeProCat/4.png" },
+      { id: 5, name: "Leather Hand Bag", image: "/HomeProCat/5.png" },
+      { id: 6, name: "Leather Laptop Bag", image: "/HomeProCat/6.png" },
+      { id: 7, name: "Leather Men's Bag", image: "/HomeProCat/7.png" },
+      { id: 8, name: "Party Bag", image: "/HomeProCat/8.png" },
+      { id: 9, name: "Raffia Bag With Emb", image: "/HomeProCat/9.png" },
+      { id: 10, name: "Raffia Bag", image: "/HomeProCat/10.png" },
+      { id: 11, name: "Beaded Clutch", image: "/HomeProCat/11.png" },
+      { id: 12, name: "Leather BackPack", image: "/HomeProCat/12.png" },
+    ],
+  },
+
+  // ─── PROCESS / HOW IT WORKS ───
+  process: {
+    heading: "How Panoramic Exports Works",
+    subheading: "A simple and streamlined 3-step process.",
+    footerNote: "We provide flexible payment options and reliable international shipping for bulk orders.",
+    steps: [
+      {
+        number: 1,
+        title: "Enquire",
+        description: "Fill out a simple form and our team will connect with you.",
+        icon: "FileText",
+      },
+      {
+        number: 2,
+        title: "Get Quote",
+        description: "Browse our catalogue and receive a competitive quotation.",
+        icon: "MessageSquare",
+      },
+      {
+        number: 3,
+        title: "Production & Delivery",
+        description: "Confirm your order and receive timely production and shipment.",
+        icon: "Rocket",
+      },
+    ],
+  },
+
+  // ─── FAQ ───
+  faq: {
+    sectionId: "faq",
+    heading: "FAQs",
+    subheading: "Quick answers to common questions from customers.",
+    items: [
+      {
+        id: 1,
+        question: "What types of products do you manufacture?",
+        answer: "We do all sort of Fashion accessories and Leather goods. Raffia bags, jute bags, beaded bags, cotton bags, evening clutches, macrame bags, beach bags, leather handbags, duffle bags, backpacks, office bags, belts, wallets, aprons and more.",
+      },
+      {
+        id: 2,
+        question: "Are you able to customize designs and materials?",
+        answer: "Yes! We specialize in working closely with our clients to develop custom designs, select preferred materials, and adjust finishes to match your brand identity and market preferences.",
+      },
+      {
+        id: 3,
+        question: "What is your minimum order (MOQ) for Fashion Bags?",
+        answer: "Our MOQ varies depending on the product type and customization requirements. For most accessories, the MOQ starts from as low as 100 pieces per design. Contact us for specific product details.",
+      },
+      {
+        id: 4,
+        question: "Do you export to the USA/UK and other international markets?",
+        answer: "Absolutely. We are an experienced fashion accessories supplier to the USA,UK,Europe, and several other global regions. Our logistics partners ensure timely and safe delivery of every order.",
+      },
+      {
+        id: 5,
+        question: "What is the lead time for production and delivery?",
+        answer: "General lead time is about 6 to 8 weeks which can vary based on order complexity and volume. Clients are encouraged to contact the team directly to discuss specific timelines.",
+      },
+    ],
+  },
+
+  // ─── CERTIFICATIONS ───
+  certifications: {
+    heading: "Our Certifications",
+    items: [
+      { name: "Sedex", image: "Certifications/1.png" },
+      { name: "EPCH", image: "Certifications/2.png" },
+      { name: "Commerce", image: "Certifications/3.png" },
+      { name: "GST", image: "Certifications/4.png" },
+      { name: "Make in India", image: "Certifications/5.png" },
+    ],
+  },
+
+  // ─── FACTORY SECTION ───
+  factory: {
+    heading: "Inside Our Factory",
+    subheading: "A complete tour of our state-of-the-art manufacturing facilities where quality meets craftsmanship.",
+    trustTitle: "✓ Complete Transparency",
+    trustDescription: "Our state-of-the-art manufacturing process combines traditional craftsmanship with modern technology. Every product undergoes rigorous quality checks at multiple stages to ensure we deliver only the best to our global partners.",
+    stations: [
+      {
+        id: 1,
+        title: "Raw Material Section",
+        description: "Premium sourcing and quality control of leather, jute, and fabric materials from trusted suppliers worldwide.",
+        icon: "Package",
+        image: "/Factory/1.webp",
+      },
+      {
+        id: 2,
+        title: "Leather Cutting Section",
+        description: "Precision cutting of leather using advanced machinery and skilled craftsmen to ensure perfect dimensions.",
+        icon: "Scissors",
+        image: "/Factory/3.webp",
+      },
+      {
+        id: 3,
+        title: "Stitching Area",
+        description: "Expert stitching with high-quality threads and modern equipment for superior durability.",
+        icon: "Wrench",
+        image: "/Factory/stiching.jpg",
+      },
+      {
+        id: 4,
+        title: "Packaging Section",
+        description: "Secure packaging using high-grade protective materials to ensure safe global delivery.",
+        icon: "RotateCcw",
+        image: "/Factory/4new.webp",
+      },
+      {
+        id: 5,
+        title: "Warehouse & Inspection",
+        description: "Final quality checks and organized warehousing for timely worldwide dispatch.",
+        icon: "Warehouse",
+        image: "/Factory/inspection.jpg",
+      },
+      {
+        id: 6,
+        title: "Final Quality Assurance",
+        description: "Every finished bag undergoes strict final QA testing to ensure international export-grade standards.",
+        icon: "Wrench",
+        image: "/Factory/5.webp",
+      },
+    ],
+  },
+
+  // ─── EXPORT INFO / CONTACT CARD ───
+  exportInfo: {
+    heading: "Our Manufacturing Units",
+    subheading: "Shipping to global brands directly from our factory.",
+    companyName: "Panoramic Exports",
+    image: "/4.png",
+    locations: [
+      { label: "Fashion Accessories Factory", address: "Sector-63 Noida, Uttar Pradesh (India)" },
+      { label: "Leather Factory & Tannery Address", address: "Kolkata, West Bengal (India)" },
+    ],
+    whatsapp: { number: "+91 98105 35863", link: "https://wa.me/919810535863" },
+    email: { address: "merchandiser@panoramicexports.com", link: "mailto:merchandiser@panoramicexports.com" },
+  },
+
+  // ─── FOOTER ───
+  footer: {
+    links: [
+      { label: "Contact Us", href: "#contact" },
+      { label: "Terms of Service", href: "/terms-of-service" },
+      { label: "Privacy Policy", href: "/privacy-policy" },
+      { label: "FAQ", href: "#faq" },
+    ],
+    socialLinks: [
+      { platform: "facebook", url: "https://www.facebook.com/panoramicexports/" },
+      { platform: "instagram", url: "https://www.instagram.com/panoramicexports/" },
+      { platform: "linkedin", url: "https://www.linkedin.com/company/panoramicexports/" },
+      { platform: "youtube", url: "https://www.youtube.com/@panoramicexports" },
+    ],
+  },
+
+  // ─── EMAIL TEMPLATES ───
+  email: {
+    ownerEmail: "rajat@panoramicexports.com",
+    bccEmail: "rachitsingh72@gmail.com",
+    ownerSubjectTemplate: "🛍️ New Catalog Request - {{fullName}}",
+    customerSubject: "Thank you for your inquiry - Panoramic Exports",
+    // The HTML templates should reference brand.name, brand.websiteUrl, etc.
+    // Keep the branded HTML layout with logo header, data box, and footer bar
+  },
+};
+```
+
+---
+
+## 📐 Component-by-Component Build Specification
+
+### 1. [Header.tsx](file:///home/rachit/build/CW/CW-PELanding-main/client/components/Header.tsx)
+**Data source:** `siteContent.brand`, `siteContent.navigation`, `siteContent.theme`
+
+| Feature | Detail |
+|---|---|
+| Top banner bar | Gold/accent color bar with `brand.tagline` text (hidden on mobile) |
+| Logo | `brand.logoSrc` as `<img>`, links to `/` |
+| Nav items | Rendered from `navigation[]` array. Supports both route navigation AND hash-scroll (e.g. `/#about`) |
+| Mobile menu | Hamburger toggle with smooth `max-h` transition. Uses `lucide-react` Menu/X icons |
+| Scroll behavior | [handleScrollNav()](file:///home/rachit/build/CW/CW-PELanding-main/client/components/Header.tsx#16-39) function: if already on homepage, smooth-scrolls to `#id`; otherwise navigates to `/` first, then scrolls after 200ms |
+| Hover effect | Underline slides in from left on hover (CSS transition `w-0 → w-full`) |
+
+### 2. `CarouselBags.tsx` (Hero Carousel)
+**Data source:** `siteContent.hero.carouselImages`
+
+| Feature | Detail |
+|---|---|
+| Desktop | Framer Motion–animated horizontal slide (`animate: x: -current*100%`). Left/right chevron arrows + clickable dot indicators. Auto-advances every 3 seconds |
+| Mobile | Static stacked images (`flex-col`), no carousel — all images visible |
+| Auto-slide | `useEffect` + [setTimeout](file:///home/rachit/build/CW/CW-PELanding-main/client/components/CarasolBags.tsx#12-16) loop, resets on manual navigation |
+
+### 3. [CatalogueForm.tsx](file:///home/rachit/build/CW/CW-PELanding-main/client/components/CatalogueForm.tsx)  ⭐ MOST CRITICAL
+**Data source:** `siteContent.form`, `siteContent.email`
+
+| Feature | Detail |
+|---|---|
+| Layout | White card, rounded-2xl, shadow-2xl. Max-width [md](file:///home/rachit/build/CW/CW-PELanding-main/AGENTS.md), centered |
+| Badge | Top-center pill badge (e.g. "DIRECT FROM FACTORY") |
+| Heading | "Get Your **Catalog** Now!" (highlight word in red) |
+| Fields | Dynamically rendered from `form.fields[]` — each has `name`, `label`, `type`, `placeholder`, `required`, `rows` (for textarea) |
+| Submit flow | **Step 1:** Save to Firebase Firestore (`addDoc` to `form.firestoreCollection`) with `fullName`, `location`, `email`, `message`, `source`, `createdAt` (serverTimestamp) |
+| | **Step 2:** Fire-and-forget `fetch('/api/send-email')` — sends owner notification + customer thank-you email. Errors logged but don't block UI |
+| | **Step 3:** Show success checkmark + title + message |
+| Reset | After `form.resetDelayMs` (8 sec), clears form and shows input again |
+| States | `isSubmitting` (spinner + disabled), `isSubmitted` (success view), `error` (red error box) |
+| Privacy note | Small gray text below submit button |
+
+### 4. [BelowHero.tsx](file:///home/rachit/build/CW/CW-PELanding-main/client/components/BelowHero.tsx) (Feature Icons Strip)
+**Data source:** `siteContent.features`
+
+| Feature | Detail |
+|---|---|
+| Layout | 2-col mobile → 4-col desktop grid |
+| Each item | External image (`src`), title, description. Fade-in-up animation (Framer Motion `whileInView`) |
+| Style | `#4A2E20` colored titles, gray descriptions |
+
+### 5. [AboutUs.tsx](file:///home/rachit/build/CW/CW-PELanding-main/client/components/AboutUs.tsx)
+**Data source:** `siteContent.about`
+
+| Feature | Detail |
+|---|---|
+| Section id | `"about"` (for nav scroll) |
+| Heading + subheading | Centered, bold |
+| Grid | 2-col on desktop: left = `<video>` (autoPlay, loop, muted), right = story paragraphs |
+| Stats bar | 2x2 mobile, 4-col desktop. Large bold numbers (`#4a2e20`) + labels |
+| Animations | Staggered fade-in via Framer Motion `containerVariants` / `itemVariants` |
+
+### 6. [Testimonials.tsx](file:///home/rachit/build/CW/CW-PELanding-main/client/components/Testimonials.tsx)
+**Data source:** `siteContent.testimonials`
+
+| Feature | Detail |
+|---|---|
+| Desktop | 3-column grid of cards (uses `testimonials.desktop[]`) |
+| Mobile | Horizontal scroll snap carousel (uses `testimonials.mobile[]` — shorter quotes) |
+| Card | Star rating (filled gold stars), italic quote, author avatar (initials circle in brand color), name, title, company |
+| Min height | `250px` per card |
+
+### 7. `Benefits.tsx`
+**Data source:** `siteContent.benefits`
+
+| Feature | Detail |
+|---|---|
+| Layout | 2x2 mobile → 4-col desktop |
+| Cards | White bg, brand-colored border, icon in circular badge (brand color `#BA9552`), title, description, gold bottom bar |
+| Icons | Dynamically resolved from `lucide-react` by name string |
+| Animations | Staggered card reveal |
+| Decorative | Blurred background blobs |
+
+### 8. `ProductCategory.tsx`
+**Data source:** `siteContent.productCategories`
+
+| Feature | Detail |
+|---|---|
+| Section id | `"ourproduct"` |
+| Grid | 3-col mobile → 4-col tablet → 6-col desktop |
+| Items | Square image box (bordered, shadowed), product name below. Hover scale `1.05` |
+| CTA | Text below grid |
+
+### 9. [Process.tsx](file:///home/rachit/build/CW/CW-PELanding-main/client/components/Process.tsx)
+**Data source:** `siteContent.process`
+
+| Feature | Detail |
+|---|---|
+| Layout | 3-col desktop with connecting gold horizontal line |
+| Each step | Number badge (`-top-5`, circular), icon in rounded box, title, description, gold bottom bar |
+| Background | Cream/light gold (`bg-[#FFF8E8]`) |
+| Footer note | Centered text about payment/shipping |
+| Animations | Staggered step reveal |
+
+### 10. [Faq.tsx](file:///home/rachit/build/CW/CW-PELanding-main/client/components/Faq.tsx)
+**Data source:** `siteContent.faq`
+
+| Feature | Detail |
+|---|---|
+| Section id | `"faq"` |
+| Accordion | Custom-built with `AnimatePresence` (Framer Motion). Click to toggle, chevron rotates |
+| Each item | Question number + text, `HelpCircle` icon (gold), expandable answer panel (slate-50 bg) |
+| Max width | `3xl` centered |
+
+### 11. [Certifications.tsx](file:///home/rachit/build/CW/CW-PELanding-main/client/components/Certifications.tsx)
+**Data source:** `siteContent.certifications`
+
+| Feature | Detail |
+|---|---|
+| Layout | 2-col mobile → 5-col desktop |
+| Items | Logo images only (responsive height: 40px mobile → 64px desktop). Gray-50 bg |
+
+### 12. [FactorySection.tsx](file:///home/rachit/build/CW/CW-PELanding-main/client/components/FactorySection.tsx)
+**Data source:** `siteContent.factory`
+
+| Feature | Detail |
+|---|---|
+| Layout | 1-col mobile → 3-col desktop |
+| Cards | Full-bleed background image, dark gradient overlay, icon + title + description in white text at bottom. Image scales on hover (`scale-110`). White accent line animates width on hover |
+| Trust box | Below grid — gradient border card with transparency message |
+| Decorative | Animated blob backgrounds |
+
+### 13. [ExportInfoCard.tsx](file:///home/rachit/build/CW/CW-PELanding-main/client/components/ExportInfoCard.tsx)
+**Data source:** `siteContent.exportInfo`
+
+| Feature | Detail |
+|---|---|
+| Layout | 2-col grid. Left: product image. Right: company name (underlined gold), location addresses, WhatsApp link (with inline SVG icon), email link |
+| WhatsApp | Links to `wa.me/` number |
+| Email | `<Mail>` icon from lucide-react |
+
+### 14. [Footer.tsx](file:///home/rachit/build/CW/CW-PELanding-main/client/components/Footer.tsx)
+**Data source:** `siteContent.footer`, `siteContent.brand`
+
+| Feature | Detail |
+|---|---|
+| Layout | Links row + social icons row (flex, centered) |
+| Links | Mix of scroll-to-section (`#contact`, `#faq`) and route navigation (`/terms-of-service`, `/privacy-policy`). Uses same [handleScrollNav](file:///home/rachit/build/CW/CW-PELanding-main/client/components/Header.tsx#16-39) logic as Header |
+| Social icons | `lucide-react` Facebook, Instagram, Linkedin, Youtube. Open in new tab |
+| Copyright | Dynamic year: `© {year} {brand.copyrightName}. All rights reserved.` |
+| Style | Dark brown bg (`#4a2e20`), light gray text |
+
+---
+
+## 🔧 API & Backend
+
+### `/api/send-email` (POST)
+**Data source:** `siteContent.email`
+
+| Aspect | Detail |
+|---|---|
+| Framework | Vercel serverless function (also wrapped by Express for dev) |
+| Transport | Nodemailer SMTP (host, port, user, pass from [.env](file:///home/rachit/build/CW/CW-PELanding-main/.env)) |
+| Two emails sent | **1) Owner notification** — branded HTML email with customer details table + reply-to customer's email. **2) Customer thank-you** — branded HTML confirmation email |
+| Email HTML | Styled HTML with dark-mode `@media (prefers-color-scheme: dark)` support. Logo header, data box, footer bar. All brand text from JSON |
+| Validation | Requires `fullName`, `email`, `location`. Returns 400 if missing |
+| Error handling | 500 with error details if email fails |
+
+### Express Server ([server/index.ts](file:///home/rachit/build/CW/CW-PELanding-main/server/index.ts))
+- `POST /api/send-email` → calls [SendEmailHandler](file:///home/rachit/build/CW/CW-PELanding-main/api/send-email.ts#4-206) (adapted from Vercel types)
+- `GET /api/ping` → returns `PING_MESSAGE` from env
+- `GET /api/demo` → returns demo response
+- Middleware: CORS, JSON body parser, URL-encoded body parser
+
+### Production Server ([server/node-build.ts](file:///home/rachit/build/CW/CW-PELanding-main/server/node-build.ts))
+- Serves built SPA from `dist/spa/`
+- React Router catch-all: serves [index.html](file:///home/rachit/build/CW/CW-PELanding-main/index.html) for all non-API routes
+- Graceful shutdown on SIGTERM / SIGINT
+
+---
+
+## 🔥 Firebase Integration
+
+**Client-side only.** Firebase Firestore used to store form leads.
+
+```typescript
+// Config via Vite env vars:
+VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN, VITE_FIREBASE_PROJECT_ID,
+VITE_FIREBASE_STORAGE_BUCKET, VITE_FIREBASE_MESSAGING_SENDER_ID,
+VITE_FIREBASE_APP_ID, VITE_FIREBASE_MEASUREMENT_ID
+```
+
+- `addDoc(collection(db, "bagsLeads"), { ...formData, source, createdAt: serverTimestamp() })`
+- Collection name is configurable via `form.firestoreCollection`
+
+---
+
+## 🎨 Styling & Theming
+
+### CSS Variables ([global.css](file:///home/rachit/build/CW/CW-PELanding-main/client/global.css))
+- **Font:** Inter (Google Fonts import)
+- **Smooth scroll:** `html { scroll-behavior: smooth }`
+- Complete light + dark theme via CSS custom properties (HSL format)
+- Key colors: warm amber/gold primary, dark brown secondary
+
+### Tailwind Config
+- shadcn/ui compatible theming with CSS variable references
+- Custom animations: `accordion-down`, `accordion-up`
+- Plugin: `tailwindcss-animate`
+- Content: `./client/**/*.{ts,tsx}`
+
+---
+
+## 📦 Key Dependencies
+
+| Category | Package |
+|---|---|
+| UI Framework | `react` 18, `react-dom` 18, `react-router-dom` 6 |
+| Animation | `framer-motion` |
+| Styling | `tailwindcss` 3, `tailwindcss-animate`, `autoprefixer`, `postcss` |
+| UI Primitives | `@radix-ui/*` (accordion, dialog, toast, tooltip, etc.), `lucide-react` |
+| Form | `react-hook-form`, `@hookform/resolvers`, `zod` |
+| Data Fetching | `@tanstack/react-query` |
+| Firebase | `firebase` (Firestore) |
+| Email | `nodemailer` |
+| Server | [express](file:///home/rachit/build/CW/CW-PELanding-main/vite.config.ts#28-40), `cors`, `dotenv` |
+| Carousel | `swiper`, `react-slick`, `embla-carousel-react` |
+| Utilities | `clsx`, `tailwind-merge`, `class-variance-authority` |
+| Counter | `react-countup`, `react-intersection-observer` |
+| Build | `vite`, `@vitejs/plugin-react-swc`, `typescript` |
+| Deploy | `@vercel/node`, `serverless-http` |
+
+---
+
+## 🌐 Deployment
+
+| Platform | Config |
+|---|---|
+| **Vercel** | [vercel.json](file:///home/rachit/build/CW/CW-PELanding-main/vercel.json): build `pnpm build:client`, output `dist/spa`, SPA rewrite `/(.*) → /index.html`. API functions in `/api/` auto-detected |
+| **Netlify** | `netlify.toml`: build `npm run build:client`, publish `dist/spa`, functions in `netlify/functions`, redirect `/api/* → /.netlify/functions/api/:splat` |
+
+---
+
+## 🧪 Environment Variables (`.env`)
+
+```
+VITE_FIREBASE_API_KEY=xxx
+VITE_FIREBASE_AUTH_DOMAIN=xxx
+VITE_FIREBASE_PROJECT_ID=xxx
+VITE_FIREBASE_STORAGE_BUCKET=xxx
+VITE_FIREBASE_MESSAGING_SENDER_ID=xxx
+VITE_FIREBASE_APP_ID=xxx
+VITE_FIREBASE_MEASUREMENT_ID=xxx
+SMTP_HOST=xxx
+SMTP_PORT=587
+SMTP_USER=xxx
+SMTP_PASS=xxx
+PING_MESSAGE=pong
+```
+
+---
+
+## 🔁 How the JSON-Driven Approach Works
+
+1. **All components import from `siteContent`** — e.g. `import { siteContent } from '@/data/siteContent'`
+2. **No hardcoded strings in components** — every heading, paragraph, image path, link, and array of items comes from the data file
+3. **To create a new site:** duplicate the project, replace `siteContent` with new brand data, swap images in `/public/`, update `.env` with new Firebase/SMTP credentials
+4. **Section IDs** like `about`, `ourproduct`, `contact`, `faq` are defined in the JSON, so navigation targets are also data-driven
+5. **Icons** are referenced by string name (e.g. `"CheckCircle2"`) and resolved at runtime via a `lucide-react` icon map
+6. **SEO meta** in `index.html` should also be templated from the JSON (or use a build-time script to inject them)
+
+---
+
+## 📋 Legal Pages
+
+The site includes **Terms of Service** (`/terms-of-service`) and **Privacy Policy** (`/privacy-policy`) as separate routes. Their content should also be driven from the JSON data file — stored as arrays of sections with headings and paragraph arrays, so they can be rendered programmatically.
+
+---
+
+## ✅ Summary Checklist
+
+- [ ] `siteContent.ts` — Single data file with all content
+- [ ] `Header` — Brand logo, nav items, scroll behavior
+- [ ] `CarouselBags` — Hero image carousel (auto-slide desktop, stacked mobile)
+- [ ] `CatalogueForm` — Lead capture → Firestore + Email API
+- [ ] `BelowHero` — Feature icons strip
+- [ ] `AboutUs` — Story, video, stats
+- [ ] `Testimonials` — Desktop grid + mobile horizontal scroll
+- [ ] `Benefits` — Icon cards grid
+- [ ] `ProductCategory` — Product image grid
+- [ ] `Process` — 3-step flow with connecting line
+- [ ] `FAQ` — Animated accordion
+- [ ] `Certifications` — Logo grid
+- [ ] `FactorySection` — Image overlay cards + trust message
+- [ ] `ExportInfoCard` — Contact details + WhatsApp + Email
+- [ ] `Footer` — Links, social, copyright
+- [ ] `/api/send-email` — Dual email (owner + customer) with branded HTML
+- [ ] Firebase Firestore integration
+- [ ] SEO meta tags
+- [ ] Google Tag Manager
+- [ ] Vercel + Netlify deployment configs
+- [ ] Terms of Service + Privacy Policy pages
+- [ ] Scroll-to-top floating button
+- [ ] Responsive design (mobile-first)
+- [ ] Framer Motion scroll-reveal animations on every section
