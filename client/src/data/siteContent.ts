@@ -4,9 +4,9 @@ export const siteContent = {
     tagline: "India's Premier Fashion Accessories & Leather Goods Manufacturer",
     logoSrc: "/logo.png", 
     logoAlt: "Panoramic Exports Logo",
-    websiteUrl: "https://panoramicexports.com",
-    contactEmail: "merchandiser@panoramicexports.com",
-    contactPhone: "+91 98105 35863",
+    websiteUrl: import.meta.env.VITE_WEBSITE_URL || "https://panoramicexports.com",
+    contactEmail: import.meta.env.VITE_CONTACT_EMAIL || "merchandiser@panoramicexports.com",
+    contactPhone: import.meta.env.VITE_CONTACT_PHONE || "+91 98105 35863",
     copyrightName: "Panoramic Exports",
   },
   theme: {
@@ -173,8 +173,8 @@ export const siteContent = {
       { label: "Fashion Accessories Factory", address: "Sector-63 Noida, Uttar Pradesh (India)" },
       { label: "Leather Factory & Tannery Address", address: "Kolkata, West Bengal (India)" },
     ],
-    whatsapp: { number: "+91 98105 35863", link: "https://wa.me/919810535863" },
-    email: { address: "merchandiser@panoramicexports.com", link: "mailto:merchandiser@panoramicexports.com" },
+    whatsapp: { number: import.meta.env.VITE_CONTACT_PHONE || "+91 98105 35863", link: import.meta.env.VITE_WHATSAPP_LINK || "https://wa.me/919810535863" },
+    email: { address: import.meta.env.VITE_CONTACT_EMAIL || "merchandiser@panoramicexports.com", link: `mailto:${import.meta.env.VITE_CONTACT_EMAIL || "merchandiser@panoramicexports.com"}` },
   },
   footer: {
     links: [
@@ -184,10 +184,10 @@ export const siteContent = {
       { label: "FAQ", href: "#faq" },
     ],
     socialLinks: [
-      { platform: "facebook", url: "https://www.facebook.com/panoramicexports/" },
-      { platform: "instagram", url: "https://www.instagram.com/panoramicexports/" },
-      { platform: "linkedin", url: "https://www.linkedin.com/company/panoramicexports/" },
-      { platform: "youtube", url: "https://www.youtube.com/@panoramicexports" },
+      { platform: "facebook", url: import.meta.env.VITE_FACEBOOK_URL || "https://www.facebook.com/panoramicexports/" },
+      { platform: "instagram", url: import.meta.env.VITE_INSTAGRAM_URL || "https://www.instagram.com/panoramicexports/" },
+      { platform: "linkedin", url: import.meta.env.VITE_LINKEDIN_URL || "https://www.linkedin.com/company/panoramicexports/" },
+      { platform: "youtube", url: import.meta.env.VITE_YOUTUBE_URL || "https://www.youtube.com/@panoramicexports" },
     ],
   },
 };
