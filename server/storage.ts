@@ -12,4 +12,28 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-export const storage = new DatabaseStorage();
+export class MemStorage implements IStorage {
+  private leads: Map<number, Lead>;
+  private currentId: number;
+
+  constructor() {
+    this.leads = new Map();
+    this.currentId = 1;
+  }
+
+  async createLead(lead: InsertLead): Promise<Lead> {
+    const id = this.currentId++;
+    const newLead: Lead = {
+      ...lead,
+      id,
+      createdAt: new Date(),
+      message: lead.message || null,
+      source: "Bags-LandingPage", // Default from schema
+    };
+    this.leads.set(id, newLead);
+    return newLead;
+  }
+}
+
+export const storage = process.env.DATABASE_URL ? new DatabaseStorage() : new MemStorage();
+

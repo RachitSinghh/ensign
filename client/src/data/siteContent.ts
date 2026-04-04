@@ -1,6 +1,6 @@
 export const siteContent = {
   brand: {
-    name: "Panoramic Exports",
+    name: "Engsign",
     tagline: "India's Premier Fashion Accessories & Leather Goods Manufacturer",
     logoSrc: "/logo.png", 
     logoAlt: "Panoramic Exports Logo",
